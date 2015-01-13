@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Minimalistic Job Search Tracker</title>
+
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script type="text/javascript" src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/0.8.1/mustache.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.js"></script>
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js"></script>
+    <link rel="stylesheet" type="text/css" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css"/>
+
+    <script id="tplJob" type="x-tmpl-mustache">
+        <div class="job">
+            <div class="row">
+                <div class="col-md-6">
+                    <a target="_blank"
+                       href="{{{ jobURL }}}">{{ jobName }} <span class="glyphicon glyphicon-share-alt"></span></a> <span
+                        class="grey"> by</span> <strong>{{ employerName }}</strong>
+                </div>
+                <div class="col-md-6">
+                    {{#actionCount}}
+                    <strong>{{actionCount}}</strong> downloads, {{/actionCount}}{{#timestamp}} last action {{
+                    lastActionFromNow }}{{/timestamp}}</small>
+
+                    <div class="btn-group pull-right jobButtons">
+                        <button type="button" class="btn btn-default jobbuttoncopylink">Copy link</button>
+                        <button type="button" class="btn btn-default jobButtonEdit">Edit</button>
+                        <button type="button" class="btn btn-warning jobButtonMarkFailed">Mark failed</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </script>
+
+    <style type="text/css">
+        .grey {
+            color: grey;
+        }
+
+        .marginTop {
+            margin-top: 24px;
+        }
+
+        .jobList {
+            margin-top: 8px;
+        }
+
+        .jobList .job {
+            padding: 8px;
+            border-top: 1px solid grey;
+        }
+
+        .jobList .job input[type=text] {
+            width: 100%;
+        }
+
+    </style>
+
+    <script type="text/javascript">
+        var rowContainer;
+
+        function getUrlToDownload(jobId, version) {
+            var ver = version || 1;
+            return "http://cherednichenko.info/" + jobId + "/" + ver + "/Alexander.Cherednichenko.CV.pdf";
+        }
+
+        function processJobRow(rendered) {
+            var model = rendered.data('model');
+
+            rendered.find('.jobbuttoncopylink').click(
+                    function () {
+                        showDownloadLinkModal(getUrlToDownload(model.uuid));
+                    }
+            )
+        }
+
+        function showDownloadLinkModal(linkURL) {
+            var modalCopyLink = $('#copyLinkModal');
+            var linkInput = modalCopyLink.find('input.linkInput');
+            var buttonClose = modalCopyLink.find('button.closeModal');
+            buttonClose.click(function () {
+                modalCopyLink.modal('hide');
+            });
+            linkInput.val(linkURL);
+            modalCopyLink.on('shown.bs.modal', function () {
+                linkInput.focus();
+                linkInput.select();
+            });
+            modalCopyLink.modal('show');
+        }
+        function redrawTable(model) {
+            var template = $('#tplJob').html();
+            Mustache.parse(template);
+            rowContainer.empty();
+
+            if(!model.length) {
+                rowContainer.append('No job applications yet. Consider adding some?');
+            }
+
+            _.each(model, function (element) {
+                element.cvDownloadUrl = getUrlToDownload(element.uuid);
+                element.lastActionFromNow = moment(element.timestamp).fromNow();
+                var rendered = $(Mustache.render(template, element));
+                rendered.data('model', element);
+                processJobRow(rendered);
+                rowContainer.append(rendered);
+            });
+        }
+
+        function loadAllJobApplications() {
+            var request = $.ajax({
+                url: "/restricted/getAllJobs",
+                dataType: "json"
+            });
+
+            request.done(function (data) {
+                redrawTable(data);
+            });
+            request.fail(function (jqXHR, textStatus) {
+                alert(textStatus);
+            });
+        }
+
+        function prepareSaveNewJobModal() {
+            var modal = $('#addJobModal');
+            var form = modal.find('form');
+            form.submit(function () {
+                var objectToSave = {
+                    employerName: form.find('#inputEmployer').val(),
+                    jobName: form.find('#inputPositionName').val(),
+                    jobURL: form.find('#inputURL').val()
+                };
+                $.ajax("/restricted/saveNewClient", {
+                    data: JSON.stringify(objectToSave),
+                    type: 'POST',
+                    contentType: "application/json"
+                }).done(function (data) {
+                            loadAllJobApplications();
+                            showDownloadLinkModal(getUrlToDownload(data));
+                            modal.modal('hide');
+                        })
+                        .fail(function (error) {
+                            console.log(error);
+                        });
+                return false;
+            });
+
+        }
+
+        $(document).ready(function () {
+            rowContainer = $('#rowContainer');
+            prepareSaveNewJobModal();
+            loadAllJobApplications();
+        });
+
+    </script>
+</head>
+<body>
+
+<div class="container">
+
+
+    <div class="row">
+        <div class="col-md-12">
+
+            <h1>Minimalistic Job Application Tracker</h1>
+
+        </div>
+    </div>
+
+</div>
+
+
+<div class="container marginTop">
+    <div class="row">
+        <div class="col-md-4">
+            <button class="btn btn-primary" data-toggle="modal"
+                    data-target="#addJobModal"><span class="glyphicon glyphicon-plus"> </span>New Job
+            </button>
+            <button class="btn btn-default" data-toggle="modal"
+                    data-target="#explanationModal"><span class="glyphicon"></span>About
+            </button>
+        </div>
+    </div>
+
+    <div id="rowContainer" class="jobList">
+    </div>
+</div>
+
+<div id="addJobModal" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Job Opportunity</h2>
+            </div>
+            <form>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="inputEmployer">Employer</label>
+                        <input type="text" class="form-control" id="inputEmployer" placeholder="Employer name">
+                    </div>
+                    <div class="form-group">
+                        <label for="inputPositionName">Position</label>
+                        <input type="text" class="form-control" id="inputPositionName" placeholder="Position name">
+                    </div>
+                    <div class="form-group">
+                        <label for="inputURL">URL</label>
+                        <input type="text" class="form-control" id="inputURL"
+                               placeholder="URL of the job description page">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary buttonSave">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="copyLinkModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Copy CV download link</h2>
+            </div>
+            <div class="modal-body">
+                <div class="container-fluid">
+                    <div class="row">
+                        <p>
+                            Please copy this link and send it over to a prospect. Its downloads will be tracked and
+                            reflected in
+                            the table. If you have notifications, they'll also be fired.
+                        </p>
+
+                        <p>
+                            Press <code>Ctrl + C</code> to copy.
+                        </p>
+                    </div>
+                    <div class="row">
+                        <input type="text" class="form-control linkInput" readonly/>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default closeModal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="explanationModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                <p>This small app provides a very small functionality. </p>
+
+                <p>First, you've got the list of applications you were sending
+                    to different recruiters and jobs. Each job should have employer, description and URL. You have to
+                    fill
+                    them
+                    manually.
+                    Next, you get the unique download link for your CV.</p>
+
+                <p>This link should be sent exclusively to the job mentioned there. After that, when someone downloads
+                    this
+                    link, the
+                    action is tracked and displayed here in the table. With this action you know when your CV was
+                    download
+                    (and
+                    probably
+                    how
+                    many times).</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

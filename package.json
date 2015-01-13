@@ -1,0 +1,29 @@
+{
+    "name": "cvtracker",
+    "description": "Simple Web application targeted at serving my CV, with some neat additional features of tracking.",
+    "version": "0.0.1",
+    "private": true,
+
+    "dependencies": {
+        "express": "3.*",
+        "mongodb": "*",
+        "async": "*",
+        "winston": "*",
+        "underscore": "*",
+        "validator": "*",
+        "uuid": "*"
+    },
+
+    "devDependencies": {
+        "mocha": "*",
+        "should": "*",
+        "supertest": "*",
+        "chai": "*"
+    },
+
+    "scripts": {
+        "test": "DISABLE_LOG=1 ./node_modules/mocha/bin/mocha --reporter spec --recursive ./tests/",
+        "run": "node ./run.js"
+    }
+}
+
