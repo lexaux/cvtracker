@@ -2,6 +2,7 @@ var _ = require('underscore'),
     LOG = require('winston'),
     path = require('path'),
     uuid = require('uuid'),
+    mailer = require('./mailer.js'),
     async = require('async'),
     validator = require('validator'),
     util = require('util'),
@@ -44,6 +45,19 @@ var api = {
                             cb);
                     });
 
+                },
+                function (cb) {
+                    dao.getDB().collection('job', function (err, jobs) {
+                        if (err) {
+                            cb(err);
+                        }
+                        jobs.findOne({uuid: jobId}, function (err, job) {
+                            if (err) {
+                                cb(err);
+                            }
+                            mailer.sendNotification(job, cb);
+                        });
+                    })
                 }
             ],
             function (err) {
@@ -74,7 +88,7 @@ var api = {
             jobName: validator.toString(jobFromClient.jobName),
             jobURL: validator.toString(jobFromClient.jobURL),
             uuid: uuid.v4(),
-            timestamp : new Date()
+            timestamp: new Date()
         };
 
         dao.getDB().collection('job', function (err, coll) {
@@ -126,6 +140,16 @@ var api = {
                     res.send(results);
                 });
         });
+    },
+
+
+    loginWithPassword: function (req, res) {
+        if (req.body.secret === 'HiMumSaidDad') {
+            req.session.isAllowed = true;
+            return res.redirect('/restricted/static');
+        }
+        res.status(400);
+        return res.send('Wrong password');
     }
 };
 

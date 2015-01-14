@@ -1,7 +1,10 @@
 var express = require('express'),
     async = require('async'),
     _ = require('underscore'),
+    util = require('util'),
+    session = require('express-session'),
     LOG = require('winston'),
+    mailer = require('./mailer.js'),
     api = require('./api.js'),
     path = require('path'),
     dao = require('./dao.js');
@@ -17,7 +20,8 @@ Application.prototype.init = function (cb) {
     async.series({
             "configure": self.configure.bind(self),
             "connectToDb": self.connectToDb.bind(self),
-            "mountAPI": self.mountAPI.bind(self),
+            "initMailer": mailer.init,
+            "mountAPI": self.mountAPI.bind(self)
         },
         function (err, callback) {
             if (err) {
@@ -36,6 +40,7 @@ Application.prototype.mountAPI = function (cb) {
     this.app.get('/:clientId/:version/Alexander.Cherednichenko.CV.pdf', api.serveCVAndTrack);
     this.app.post('/restricted/saveNewClient', api.saveNewClient);
     this.app.get('/restricted/getAllJobs', api.getAllJobs);
+    this.app.post('/restricted/loginWithPassword', api.loginWithPassword);
     cb();
 };
 
@@ -47,12 +52,29 @@ Application.prototype.configure = function (cb) {
 //Configuration for errorHandler and others.
     var self = this;
 
+    //TODO: this should be replaced to somehting like Redis/Memcached storage to achieve proper multi=node work.
+    self.app.use(session({
+        secret: "hi I'm a secret"
+    }));
+
+    self.app.use("/restricted/", function (req, res, next) {
+        if(!(
+            req.originalUrl === '/restricted/static/login.html'
+            || req.originalUrl === '/restricted/loginWithPassword'
+            )
+            && !req.session.isAllowed) {
+            return res.redirect(302, "/restricted/static/login.html")
+        }
+        LOG.info(util.format('Logged in middleware. Url is %s', req.originalUrl));
+        next();
+    });
+
     self.app.use("/restricted/static", express.static(__dirname + '/static'));
-    self.app.use(express.json());
+    self.app.use(express.bodyParser());
 
 
     self.app.customConfiguration = {
-        dbURL: "mongodb://localhost/cvtracker"
+        dbURL: process.env.MONGOLAB_URI || "mongodb://localhost/cvtracker"
     };
 
     cb();

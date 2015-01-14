@@ -11,6 +11,8 @@
         "winston": "*",
         "underscore": "*",
         "validator": "*",
+        "express-session": "*",
+        "sendgrid": "*",
         "uuid": "*"
     },
 
