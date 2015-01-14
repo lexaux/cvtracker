@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Minimalistic Job Search Tracker</title>
+
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script type="text/javascript" src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/0.8.1/mustache.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.js"></script>
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js"></script>
+    <link rel="stylesheet" type="text/css" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css"/>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var passwordInput = $('#passwordInput');
+            passwordInput.focus();
+
+            var form = $('form');
+            form.submit(function () {
+                $.ajax('/restricted/loginWithPassword', {type: 'POST', data: {secret: passwordInput.val()}})
+                        .done(function () {
+                            window.location.replace('/restricted/static');
+                        })
+                        .fail(function (err) {
+                            $('#wrongPasswordAlert').show();
+                            passwordInput.select();
+                            passwordInput.focus();
+                        });
+
+                return false;
+            });
+
+        });
+    </script>
+    <style type="text/css">
+        .marginTop {
+            margin-top: 24px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container marginTop">
+    <div class="row">
+        <div class="col-md-12">
+            <h2>Minimalistic Job Application Tracker.</h2>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12 marginTop">
+            <form>
+                <div class="form-group">
+                    <input id="passwordInput" type="text" class="form-control" id="inputURL"
+                           placeholder="Please enter a secret password, and hit 'Enter'">
+                </div>
+            </form>
+        </div>
+        <div class="alert alert-danger" style="display:none" id="wrongPasswordAlert" role="alert">
+            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+            Enter the corret secret!
+        </div>
+    </div>
+</div>
+</body>
+</html>
