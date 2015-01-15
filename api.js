@@ -150,6 +150,10 @@ var api = {
         }
         res.status(400);
         return res.send('Wrong password');
+    },
+
+    healthStatus: function (req, res) {
+        res.send('OK');
     }
 };
 

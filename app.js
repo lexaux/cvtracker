@@ -38,6 +38,7 @@ Application.prototype.init = function (cb) {
 
 Application.prototype.mountAPI = function (cb) {
     this.app.get('/:clientId/:version/Alexander.Cherednichenko.CV.pdf', api.serveCVAndTrack);
+    this.app.get('/healthStatus', api.healthStatus);
     this.app.post('/restricted/saveNewClient', api.saveNewClient);
     this.app.get('/restricted/getAllJobs', api.getAllJobs);
     this.app.post('/restricted/loginWithPassword', api.loginWithPassword);
