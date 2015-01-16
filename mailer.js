@@ -7,7 +7,6 @@ var express = require('express'),
 
 var NOTIFICATION_EMAIL = "lexaux@gmail.com";
 var NOTIFICATION_FROM = "robot@cherednichenko.info";
-var NOTIFICATION_TOPIC = "CV view";
 var sendgrid = null;
 
 var mailer = {
@@ -16,11 +15,12 @@ var mailer = {
             LOG.info('No sendgrid configuration, skipping email.');
             return cb();
         }
+        // prepare text
         sendgrid.send({
             to: NOTIFICATION_EMAIL,
             from: NOTIFICATION_FROM,
-            subject: NOTIFICATION_TOPIC,
-            text: 'Hello From Sendgrid!'
+            subject: util.format("CV view by %s for position %s", client.employerName, client.jobName),
+            text: util.format('Your CV has been viewed! Url is %s', client.jobURL)
         }, cb);
     },
 

@@ -14,6 +14,15 @@ function Application() {
     this.app = express();
 }
 
+Application.prototype.mountAPI = function (cb) {
+    this.app.get('/:clientId/:version/Alexander.Cherednichenko.CV.pdf', api.serveCVAndTrack);
+    this.app.get('/healthStatus', api.healthStatus);
+    this.app.post('/restricted/saveNewClient', api.saveNewClient);
+    this.app.get('/restricted/getAllJobs', api.getAllJobs);
+    this.app.post('/restricted/loginWithPassword', api.loginWithPassword);
+    cb();
+};
+
 Application.prototype.init = function (cb) {
     var self = this;
 
@@ -33,16 +42,6 @@ Application.prototype.init = function (cb) {
                 cb(err);
             }
         })
-};
-
-
-Application.prototype.mountAPI = function (cb) {
-    this.app.get('/:clientId/:version/Alexander.Cherednichenko.CV.pdf', api.serveCVAndTrack);
-    this.app.get('/healthStatus', api.healthStatus);
-    this.app.post('/restricted/saveNewClient', api.saveNewClient);
-    this.app.get('/restricted/getAllJobs', api.getAllJobs);
-    this.app.post('/restricted/loginWithPassword', api.loginWithPassword);
-    cb();
 };
 
 Application.prototype.connectToDb = function (cb) {
@@ -72,7 +71,6 @@ Application.prototype.configure = function (cb) {
 
     self.app.use("/restricted/static", express.static(__dirname + '/static'));
     self.app.use(express.bodyParser());
-
 
     self.app.customConfiguration = {
         dbURL: process.env.MONGOLAB_URI || "mongodb://localhost/cvtracker"
