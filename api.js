@@ -10,6 +10,7 @@ var _ = require('underscore'),
 
 
 var FILENAME = 'Alexander.Cherednichenko.CV.pdf';
+var CORRECT_PASSWORD = process.env.WEB_LOGIN_PASSWORD || 'HiMumSaidDad';
 
 var api = {
     serveCVAndTrack: function (req, res) {
@@ -144,7 +145,7 @@ var api = {
 
 
     loginWithPassword: function (req, res) {
-        if (req.body.secret === 'HiMumSaidDad') {
+        if (req.body.secret === CORRECT_PASSWORD) {
             req.session.isAllowed = true;
             return res.redirect('/restricted/static');
         }
